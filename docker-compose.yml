@@ -1,0 +1,174 @@
+# 5G standalone core lab: Open5GS core + UERANSIM gNB/UEs.
+#
+#   PROFILE=baseline  docker compose up -d      (default: Open5GS defaults)
+#   PROFILE=hardened  docker compose up -d      (security-hardened, see docs/)
+#   docker compose --profile rogue up -d rogue-gnb   (attack demo, lab only)
+#
+# Networks:  core 10.10.1.0/24 (SBI + PFCP)   ran 10.10.2.0/24 (N2, N3, radio sim)
+#            dn   10.10.3.0/24 (N6, data network, only network with internet access)
+
+x-nf: &nf
+  image: gradiant/open5gs:2.7.2
+  restart: unless-stopped
+  networks: [core]
+
+x-ue: &ue
+  image: gradiant/ueransim:3.3.0
+  restart: on-failure
+  cap_add: [NET_ADMIN]
+  devices: ["/dev/net/tun:/dev/net/tun"]
+  depends_on: [gnb]
+
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    volumes: [mongo-data:/data/db]
+    networks:
+      core: {ipv4_address: 10.10.1.2}
+
+  nrf:
+    <<: *nf
+    command: open5gs-nrfd -c /opt/open5gs/etc/open5gs/nrf.yaml
+    volumes: ["./config/profiles/${PROFILE:-baseline}/nrf.yaml:/opt/open5gs/etc/open5gs/nrf.yaml:ro"]
+    networks: {core: {ipv4_address: 10.10.1.10, aliases: [nrf.localdomain]}}
+
+  scp:
+    <<: *nf
+    command: open5gs-scpd -c /opt/open5gs/etc/open5gs/scp.yaml
+    volumes: ["./config/profiles/${PROFILE:-baseline}/scp.yaml:/opt/open5gs/etc/open5gs/scp.yaml:ro"]
+    networks: {core: {ipv4_address: 10.10.1.11, aliases: [scp.localdomain]}}
+    depends_on: [nrf]
+
+  udr:
+    <<: *nf
+    command: open5gs-udrd -c /opt/open5gs/etc/open5gs/udr.yaml
+    volumes: ["./config/profiles/${PROFILE:-baseline}/udr.yaml:/opt/open5gs/etc/open5gs/udr.yaml:ro"]
+    networks: {core: {ipv4_address: 10.10.1.17, aliases: [udr.localdomain]}}
+    depends_on: [scp, mongo]
+
+  udm:
+    <<: *nf
+    command: open5gs-udmd -c /opt/open5gs/etc/open5gs/udm.yaml
+    volumes: ["./config/profiles/${PROFILE:-baseline}/udm.yaml:/opt/open5gs/etc/open5gs/udm.yaml:ro"]
+    networks: {core: {ipv4_address: 10.10.1.16, aliases: [udm.localdomain]}}
+    depends_on: [scp]
+
+  ausf:
+    <<: *nf
+    command: open5gs-ausfd -c /opt/open5gs/etc/open5gs/ausf.yaml
+    volumes: ["./config/profiles/${PROFILE:-baseline}/ausf.yaml:/opt/open5gs/etc/open5gs/ausf.yaml:ro"]
+    networks: {core: {ipv4_address: 10.10.1.15, aliases: [ausf.localdomain]}}
+    depends_on: [scp]
+
+  pcf:
+    <<: *nf
+    command: open5gs-pcfd -c /opt/open5gs/etc/open5gs/pcf.yaml
+    volumes: ["./config/profiles/${PROFILE:-baseline}/pcf.yaml:/opt/open5gs/etc/open5gs/pcf.yaml:ro"]
+    networks: {core: {ipv4_address: 10.10.1.18, aliases: [pcf.localdomain]}}
+    depends_on: [scp, mongo]
+
+  bsf:
+    <<: *nf
+    command: open5gs-bsfd -c /opt/open5gs/etc/open5gs/bsf.yaml
+    volumes: ["./config/profiles/${PROFILE:-baseline}/bsf.yaml:/opt/open5gs/etc/open5gs/bsf.yaml:ro"]
+    networks: {core: {ipv4_address: 10.10.1.19, aliases: [bsf.localdomain]}}
+    depends_on: [scp, mongo]
+
+  nssf:
+    <<: *nf
+    command: open5gs-nssfd -c /opt/open5gs/etc/open5gs/nssf.yaml
+    volumes: ["./config/profiles/${PROFILE:-baseline}/nssf.yaml:/opt/open5gs/etc/open5gs/nssf.yaml:ro"]
+    networks: {core: {ipv4_address: 10.10.1.20, aliases: [nssf.localdomain]}}
+    depends_on: [scp]
+
+  amf:
+    <<: *nf
+    user: root                    # needed to install the N2 firewall rule, then drops to open5gs
+    entrypoint: ["/amf-start.sh"]
+    command: []
+    cap_add: [NET_ADMIN]
+    environment:
+      N2_ALLOW: "${N2_ALLOW:-}"
+    volumes:
+      - ./scripts/amf-start.sh:/amf-start.sh:ro
+      - ./config/profiles/${PROFILE:-baseline}/amf.yaml:/opt/open5gs/etc/open5gs/amf.yaml:ro
+    networks:
+      core: {ipv4_address: 10.10.1.12, aliases: [amf.localdomain]}
+      ran: {ipv4_address: 10.10.2.12}
+    depends_on: [scp]
+
+  smf:
+    <<: *nf
+    command: open5gs-smfd -c /opt/open5gs/etc/open5gs/smf.yaml
+    volumes: ["./config/profiles/${PROFILE:-baseline}/smf.yaml:/opt/open5gs/etc/open5gs/smf.yaml:ro"]
+    networks: {core: {ipv4_address: 10.10.1.13, aliases: [smf.localdomain]}}
+    depends_on: [scp]
+
+  upf:
+    <<: *nf
+    user: root
+    entrypoint: ["/upf-start.sh"]
+    command: []
+    cap_add: [NET_ADMIN]
+    devices: ["/dev/net/tun:/dev/net/tun"]
+    sysctls: {net.ipv4.ip_forward: "1"}
+    environment:
+      SLICE_ISOLATION: "${SLICE_ISOLATION:-no}"
+    volumes:
+      - ./scripts/upf-start.sh:/upf-start.sh:ro
+      - ./config/profiles/${PROFILE:-baseline}/upf.yaml:/opt/open5gs/etc/open5gs/upf.yaml:ro
+    networks:
+      core: {ipv4_address: 10.10.1.14}
+      ran: {ipv4_address: 10.10.2.14}
+      dn: {ipv4_address: 10.10.3.14}
+    depends_on: [smf]
+
+  gnb:
+    image: gradiant/ueransim:3.3.0
+    restart: on-failure
+    entrypoint: ["nr-gnb", "-c", "/cfg/gnb.yaml"]
+    volumes: ["./config/profiles/${PROFILE:-baseline}/gnb.yaml:/cfg/gnb.yaml:ro"]
+    networks: {ran: {ipv4_address: 10.10.2.20}}
+    depends_on: [amf, upf]
+
+  ue1:
+    <<: *ue
+    entrypoint: ["nr-ue", "-c", "/cfg/ue.yaml"]
+    volumes: ["./config/profiles/${PROFILE:-baseline}/ue1.yaml:/cfg/ue.yaml:ro"]
+    networks: {ran: {ipv4_address: 10.10.2.31}}
+
+  ue2:
+    <<: *ue
+    entrypoint: ["nr-ue", "-c", "/cfg/ue.yaml"]
+    volumes: ["./config/profiles/${PROFILE:-baseline}/ue2.yaml:/cfg/ue.yaml:ro"]
+    networks: {ran: {ipv4_address: 10.10.2.32}}
+
+  # Server on the data network, used for iperf3 throughput/latency tests through the UPF.
+  dn-server:
+    image: networkstatic/iperf3
+    restart: unless-stopped
+    command: ["-s"]
+    networks: {dn: {ipv4_address: 10.10.3.50}}
+
+  # Attack demo only (profile "rogue"): an unauthorised gNB trying to join the AMF.
+  rogue-gnb:
+    image: gradiant/ueransim:3.3.0
+    profiles: [rogue]
+    restart: "no"
+    entrypoint: ["nr-gnb", "-c", "/cfg/gnb.yaml"]
+    volumes: ["./config/profiles/${PROFILE:-baseline}/rogue-gnb.yaml:/cfg/gnb.yaml:ro"]
+    networks: {ran: {ipv4_address: 10.10.2.66}}
+
+networks:
+  core:
+    internal: true
+    ipam: {config: [{subnet: 10.10.1.0/24}]}
+  ran:
+    internal: true
+    ipam: {config: [{subnet: 10.10.2.0/24}]}
+  dn:
+    ipam: {config: [{subnet: 10.10.3.0/24}]}
+
+volumes:
+  mongo-data:
