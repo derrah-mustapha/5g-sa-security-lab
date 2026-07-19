@@ -1,0 +1,41 @@
+logger:
+  path:
+    file: /opt/open5gs/var/log/open5gs/smf.log
+global: null
+smf:
+  sbi:
+    server:
+    - port: 7777
+      address: 10.10.1.13
+    client:
+      scp:
+      - uri: http://scp:7777
+  pfcp:
+    server:
+    - address: 10.10.1.13
+    client:
+      upf:
+      - address: 10.10.1.14
+  gtpc:
+    server:
+    - address: 10.10.1.13
+  gtpu:
+    server:
+    - address: 10.10.1.13
+  metrics:
+    server:
+    - port: 9090
+      address: 10.10.1.13
+  session:
+  - subnet: 10.45.0.0/24
+    gateway: 10.45.0.1
+    dnn: internet
+  - subnet: 10.46.0.0/24
+    gateway: 10.46.0.1
+    dnn: urllc
+  dns:
+  - 8.8.8.8
+  - 1.1.1.1
+  mtu: 1400
+  ctf:
+    enabled: auto

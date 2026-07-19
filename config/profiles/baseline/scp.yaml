@@ -1,0 +1,12 @@
+logger:
+  path:
+    file: /opt/open5gs/var/log/open5gs/scp.log
+global: null
+scp:
+  sbi:
+    server:
+    - port: 7777
+      address: 10.10.1.11
+    client:
+      nrf:
+      - uri: http://nrf:7777

@@ -1,0 +1,44 @@
+logger:
+  path:
+    file: /opt/open5gs/var/log/open5gs/udm.log
+global: null
+udm:
+  hnet:
+  - id: 1
+    scheme: 1
+    key: /opt/open5gs/etc/open5gs/hnet/curve25519-1.key
+  - id: 2
+    scheme: 2
+    key: /opt/open5gs/etc/open5gs/hnet/secp256r1-2.key
+  - id: 3
+    scheme: 1
+    key: /opt/open5gs/etc/open5gs/hnet/curve25519-3.key
+  - id: 4
+    scheme: 2
+    key: /opt/open5gs/etc/open5gs/hnet/secp256r1-4.key
+  - id: 5
+    scheme: 1
+    key: /opt/open5gs/etc/open5gs/hnet/curve25519-5.key
+  - id: 6
+    scheme: 2
+    key: /opt/open5gs/etc/open5gs/hnet/secp256r1-6.key
+  sbi:
+    server:
+    - port: 443
+      address: udm.localdomain
+    client:
+      nrf:
+      - uri: https://nrf.localdomain
+  default:
+    tls:
+      server:
+        scheme: https
+        private_key: /opt/open5gs/etc/open5gs/tls/udm.key
+        cert: /opt/open5gs/etc/open5gs/tls/udm.crt
+        verify_client: true
+        verify_client_cacert: /opt/open5gs/etc/open5gs/tls/ca.crt
+      client:
+        scheme: https
+        cacert: /opt/open5gs/etc/open5gs/tls/ca.crt
+        client_private_key: /opt/open5gs/etc/open5gs/tls/udm.key
+        client_cert: /opt/open5gs/etc/open5gs/tls/udm.crt

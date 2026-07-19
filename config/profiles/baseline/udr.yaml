@@ -1,0 +1,13 @@
+db_uri: mongodb://mongo/open5gs
+logger:
+  path:
+    file: /opt/open5gs/var/log/open5gs/udr.log
+global: null
+udr:
+  sbi:
+    server:
+    - port: 7777
+      address: 10.10.1.17
+    client:
+      scp:
+      - uri: http://scp:7777

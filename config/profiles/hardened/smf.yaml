@@ -1,0 +1,54 @@
+logger:
+  path:
+    file: /opt/open5gs/var/log/open5gs/smf.log
+global: null
+smf:
+  sbi:
+    server:
+    - port: 443
+      address: smf.localdomain
+    client:
+      nrf:
+      - uri: https://nrf.localdomain
+  pfcp:
+    server:
+    - address: 10.10.1.13
+    client:
+      upf:
+      - address: 10.10.1.14
+  gtpc:
+    server:
+    - address: 10.10.1.13
+  gtpu:
+    server:
+    - address: 10.10.1.13
+  metrics:
+    server:
+    - port: 9090
+      address: 10.10.1.13
+  session:
+  - subnet: 10.45.0.0/24
+    gateway: 10.45.0.1
+    dnn: internet
+  - subnet: 10.46.0.0/24
+    gateway: 10.46.0.1
+    dnn: urllc
+  dns:
+  - 8.8.8.8
+  - 1.1.1.1
+  mtu: 1400
+  ctf:
+    enabled: auto
+  default:
+    tls:
+      server:
+        scheme: https
+        private_key: /opt/open5gs/etc/open5gs/tls/smf.key
+        cert: /opt/open5gs/etc/open5gs/tls/smf.crt
+        verify_client: true
+        verify_client_cacert: /opt/open5gs/etc/open5gs/tls/ca.crt
+      client:
+        scheme: https
+        cacert: /opt/open5gs/etc/open5gs/tls/ca.crt
+        client_private_key: /opt/open5gs/etc/open5gs/tls/smf.key
+        client_cert: /opt/open5gs/etc/open5gs/tls/smf.crt

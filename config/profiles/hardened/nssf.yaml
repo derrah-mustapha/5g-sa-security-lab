@@ -1,0 +1,33 @@
+logger:
+  path:
+    file: /opt/open5gs/var/log/open5gs/nssf.log
+global:
+  max: null
+nssf:
+  sbi:
+    server:
+    - port: 443
+      address: nssf.localdomain
+    client:
+      nsi:
+      - uri: https://nrf.localdomain
+        s_nssai:
+          sst: 1
+      - uri: https://nrf.localdomain
+        s_nssai:
+          sst: 2
+      nrf:
+      - uri: https://nrf.localdomain
+  default:
+    tls:
+      server:
+        scheme: https
+        private_key: /opt/open5gs/etc/open5gs/tls/nssf.key
+        cert: /opt/open5gs/etc/open5gs/tls/nssf.crt
+        verify_client: true
+        verify_client_cacert: /opt/open5gs/etc/open5gs/tls/ca.crt
+      client:
+        scheme: https
+        cacert: /opt/open5gs/etc/open5gs/tls/ca.crt
+        client_private_key: /opt/open5gs/etc/open5gs/tls/nssf.key
+        client_cert: /opt/open5gs/etc/open5gs/tls/nssf.crt

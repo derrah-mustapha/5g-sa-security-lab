@@ -1,0 +1,17 @@
+db_uri: mongodb://mongo/open5gs
+logger:
+  path:
+    file: /opt/open5gs/var/log/open5gs/pcf.log
+global: null
+pcf:
+  sbi:
+    server:
+    - port: 7777
+      address: 10.10.1.18
+    client:
+      scp:
+      - uri: http://scp:7777
+  metrics:
+    server:
+    - port: 9090
+      address: 10.10.1.18

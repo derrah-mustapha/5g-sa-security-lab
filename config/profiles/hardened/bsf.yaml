@@ -1,0 +1,25 @@
+logger:
+  path:
+    file: /opt/open5gs/var/log/open5gs/bsf.log
+global: null
+bsf:
+  sbi:
+    server:
+    - port: 443
+      address: bsf.localdomain
+    client:
+      nrf:
+      - uri: https://nrf.localdomain
+  default:
+    tls:
+      server:
+        scheme: https
+        private_key: /opt/open5gs/etc/open5gs/tls/bsf.key
+        cert: /opt/open5gs/etc/open5gs/tls/bsf.crt
+        verify_client: true
+        verify_client_cacert: /opt/open5gs/etc/open5gs/tls/ca.crt
+      client:
+        scheme: https
+        cacert: /opt/open5gs/etc/open5gs/tls/ca.crt
+        client_private_key: /opt/open5gs/etc/open5gs/tls/bsf.key
+        client_cert: /opt/open5gs/etc/open5gs/tls/bsf.crt

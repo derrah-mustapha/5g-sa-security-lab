@@ -1,0 +1,22 @@
+logger:
+  path:
+    file: /opt/open5gs/var/log/open5gs/upf.log
+global: null
+upf:
+  pfcp:
+    server:
+    - address: 10.10.1.14
+  gtpu:
+    server:
+    - address: 10.10.2.14
+  session:
+  - subnet: 10.45.0.0/24
+    gateway: 10.45.0.1
+    dnn: internet
+  - subnet: 10.46.0.0/24
+    gateway: 10.46.0.1
+    dnn: urllc
+  metrics:
+    server:
+    - port: 9090
+      address: 10.10.1.14
